@@ -18,9 +18,12 @@ A starter template for building Chrome extensions with companion websites, power
 # 1. Install dependencies
 bun install
 
-# 2. Start the Convex backend (interactive — creates your deployment)
-bun run dev:backend
-# Wait for "Convex functions ready!", then press Ctrl+C
+# 2. Set up Convex (interactive — login + create deployment)
+#    This must be run manually from the backend directory on first setup.
+cd packages/backend && bun dev
+#    Follow the prompts to log in and create a project.
+#    Wait for "Convex functions ready!", then press Ctrl+C.
+cd ../..
 
 # 3. Propagate the Convex URL to both apps
 bun run setup:env
