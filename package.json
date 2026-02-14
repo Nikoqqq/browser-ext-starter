@@ -1,0 +1,21 @@
+{
+  "name": "browser-extension-starter",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun --filter '*' dev",
+    "dev:web": "bun --filter @starter/web dev",
+    "dev:ext": "bun --filter @starter/extension dev",
+    "dev:backend": "bun --filter @starter/backend dev",
+    "build:web": "bun --filter @starter/web build",
+    "build:ext": "bun --filter @starter/extension build"
+  },
+  "trustedDependencies": [
+    "@starter/extension",
+    "spawn-sync",
+    "unrs-resolver"
+  ]
+}
