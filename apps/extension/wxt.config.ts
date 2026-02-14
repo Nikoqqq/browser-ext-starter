@@ -1,3 +1,4 @@
+import path from "node:path";
 import { defineConfig } from "wxt";
 import tailwindcss from "@tailwindcss/vite";
 
@@ -10,6 +11,11 @@ export default defineConfig({
   },
   vite: () => ({
     plugins: [tailwindcss()],
+    resolve: {
+      alias: {
+        "@starter/backend": path.resolve(__dirname, "../../packages/backend"),
+      },
+    },
   }),
   webExt: {
     disabled: true,

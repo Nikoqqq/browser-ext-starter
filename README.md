@@ -19,11 +19,11 @@ A starter template for building Chrome extensions with companion websites, power
 bun install
 
 # 2. Start the Convex backend (interactive — creates your deployment)
-bun --filter @starter/backend dev
+bun run dev:backend
+# Wait for "Convex functions ready!", then press Ctrl+C
 
-# 3. Copy the Convex URL from the output, then set it in both apps:
-#    apps/extension/.env       → VITE_CONVEX_URL=https://your-deployment.convex.cloud
-#    apps/web/.env.local       → NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
+# 3. Propagate the Convex URL to both apps
+bun run setup:env
 
 # 4. Start everything (backend + web + extension)
 bun run dev
@@ -73,3 +73,4 @@ This proves the end-to-end architecture works. Replace the counter with your own
 | `bun run dev:ext` | WXT dev server only (port 3200) |
 | `bun run build:web` | Production build for web |
 | `bun run build:ext` | Production build for extension |
+| `bun run setup:env` | Propagate Convex URL to app env files |

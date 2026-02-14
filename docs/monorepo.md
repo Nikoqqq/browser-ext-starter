@@ -35,6 +35,18 @@ bun --filter @starter/extension build  # production build extension
 - `apps/web/.env.local` — `NEXT_PUBLIC_CONVEX_URL`, needed by Next.js client
 - `apps/extension/.env` — `VITE_CONVEX_URL`, used by WXT/Vite at build time
 
+Run `bun run setup:env` after starting the backend to propagate the Convex URL to both apps automatically.
+
+## Import Resolution
+
+Both apps import Convex types via:
+
+```ts
+import { api } from "@starter/backend/convex/_generated/api";
+```
+
+The `_generated/` directory is created by `convex dev` and is not committed to git. Bundler resolve aliases in `wxt.config.ts` (Vite) and `next.config.ts` (Turbopack/Webpack) ensure imports resolve from the real source directory rather than through `node_modules` hardlinks.
+
 ## Loading the Extension
 
 Load `apps/extension/.output/chrome-mv3/` as unpacked extension in `chrome://extensions` (enable Developer mode).
