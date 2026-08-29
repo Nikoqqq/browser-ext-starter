@@ -1,6 +1,11 @@
 {
   "name": "browser-extension-starter",
   "private": true,
+  "packageManager": "bun@1.4.0",
+  "engines": {
+    "bun": ">=1.4.0",
+    "node": ">=22.12.0"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -9,14 +14,48 @@
     "dev": "bun --filter '*' dev",
     "dev:web": "bun --filter @starter/web dev",
     "dev:ext": "bun --filter @starter/extension dev",
-    "dev:backend": "bun --filter @starter/backend dev",
+    "dev:backend": "convex dev",
+    "codegen": "convex codegen",
     "build:web": "bun --filter @starter/web build",
     "build:ext": "bun --filter @starter/extension build",
+    "build:ext:firefox": "bun --filter @starter/extension build:firefox",
+    "build": "bun run build:web && bun run build:ext",
+    "zip:ext": "bun --filter @starter/extension zip",
+    "zip:ext:firefox": "bun --filter @starter/extension zip:firefox",
+    "clean:ext": "bun --filter @starter/extension clean",
+    "lint": "bun --filter @starter/web lint",
+    "typecheck:root": "tsc --noEmit -p tsconfig.json",
+    "typecheck:backend": "bun --filter @starter/backend typecheck",
+    "typecheck:web": "bun --filter @starter/web typecheck",
+    "typecheck:ext": "bun --filter @starter/extension typecheck",
+    "typecheck": "bun run typecheck:root && bun run typecheck:backend && bun run typecheck:web && bun run typecheck:ext",
+    "check": "bun run lint && bun run typecheck && bun run build && bun run build:ext:firefox && bun run audit",
+    "check:release-env": "bun run scripts/check-release-env.ts",
+    "check:release": "bun run check:release-env && bun run check && bun run zip:ext && bun run zip:ext:firefox",
+    "audit": "bun audit --audit-level=high",
+    "audit:all": "bun audit",
     "setup:env": "bun run scripts/setup-env.ts"
   },
   "trustedDependencies": [
     "@starter/extension",
-    "spawn-sync",
+    "esbuild",
+    "sharp",
     "unrs-resolver"
-  ]
+  ],
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "convex": "^1.45.0",
+    "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "@vitejs/plugin-react": "6.1.1",
+    "brace-expansion@^1.0.0": "1.1.18",
+    "brace-expansion@^2.0.0": "2.1.4",
+    "defu": "6.1.7",
+    "flatted": "3.4.4",
+    "minimatch@^3.0.0": "3.1.5",
+    "minimatch@^9.0.0": "9.0.9",
+    "picomatch@^2.0.0": "2.3.2",
+    "picomatch@^4.0.0": "4.0.7"
+  }
 }

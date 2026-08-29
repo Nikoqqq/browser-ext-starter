@@ -1,56 +1,88 @@
-# Monorepo Structure
+# Monorepo guide
 
-```
+## Workspace layout
+
+```text
 apps/
-  extension/    @starter/extension   — WXT browser extension (Chrome, all URLs)
-  web/          @starter/web         — Next.js + shadcn website
+  extension/    @starter/extension   WXT extension for Chrome and Firefox
+  web/          @starter/web         Next.js companion app
 packages/
-  backend/      @starter/backend     — Convex backend (schema, functions, generated types)
-  shared/       @starter/shared      — Shared utils used by both apps
+  backend/      @starter/backend     Convex functions and generated types
+  shared/       @starter/shared      Optional cross-app utilities
 ```
 
-Bun workspaces link everything. Apps import Convex types via:
+Bun workspaces link local packages. The two clients share Convex types through:
 
 ```ts
 import { api } from "@starter/backend/convex/_generated/api";
 ```
+
+`packages/shared` is intentionally not an app dependency until it exports something used by both clients.
+
+## Convex project root
+
+The repository root is the canonical Convex CLI working directory. Root `convex.json` points at `packages/backend/convex`, and root `.env.local` stores the selected local or cloud deployment.
+
+```bash
+bun run dev:backend   # interactive cloud/local setup in a terminal
+bun run codegen       # regenerate types against the configured deployment
+```
+
+For a non-interactive, account-free local backend:
+
+```bash
+CONVEX_AGENT_MODE=anonymous bun run dev:backend
+```
+
+The files under `packages/backend/convex/_generated/` are generated but committed. Keeping them in Git lets fresh checkouts type-check and build before a developer selects a deployment.
+
+## Environment routing
+
+| File | Owner | Client variable |
+| --- | --- | --- |
+| `.env.local` | Convex CLI | `CONVEX_DEPLOYMENT` and/or `CONVEX_URL` |
+| `apps/web/.env.local` | setup script | `NEXT_PUBLIC_CONVEX_URL` |
+| `apps/extension/.env` | setup script | `VITE_CONVEX_URL` |
+| `apps/extension/.env.production.local` | release owner | production `VITE_CONVEX_URL` |
+
+After selecting a Convex deployment, run `bun run setup:env`. The script preserves unrelated variables and upserts only the public Convex URL used by each client.
+
+Do not commit any of these env files. `.env.example` documents the root shape without containing a real deployment.
+
+Release builds require an explicit production URL through `VITE_CONVEX_URL` or the gitignored `apps/extension/.env.production.local`. `bun run check:release` deliberately ignores the development `.env` during preflight and rejects missing, local, or malformed release origins.
 
 ## Commands
 
 ```bash
-bun install                          # install all workspaces from root
-bun run dev                          # run all three (backend + web + extension) in parallel
+bun install --frozen-lockfile
+bun run dev
 
-bun --filter @starter/backend dev    # convex dev (run first on fresh clone — interactive setup)
-bun --filter @starter/web dev        # next.js dev server (port 3100)
-bun --filter @starter/extension dev  # wxt dev (load apps/extension/.output/chrome-mv3 in chrome://extensions)
-
-bun --filter @starter/web build      # production build web
-bun --filter @starter/extension build  # production build extension
+bun run lint
+bun run typecheck
+bun run build
+bun run build:ext:firefox
+bun run check
+bun run check:release
 ```
 
-## Env Files
+WXT writes unpacked builds to `apps/extension/.output/chrome-mv3/` and `apps/extension/.output/firefox-mv2/`, with release archives in `apps/extension/.output/`. These outputs are ignored and must be regenerated before they are treated as evidence.
 
-- `packages/backend/.env.local` — `CONVEX_DEPLOYMENT`, created by `convex dev` on first run (interactive)
-- `apps/web/.env.local` — `NEXT_PUBLIC_CONVEX_URL`, needed by Next.js client
-- `apps/extension/.env` — `VITE_CONVEX_URL`, used by WXT/Vite at build time
+## Convex AI files
 
-Run `bun run setup:env` after starting the backend to propagate the Convex URL to both apps automatically.
+Root `convex.json` enables AI files for Codex and Claude Code. The generated `AGENTS.md`, `CLAUDE.md`, backend guidelines, skills, and `skills-lock.json` are committed so contributors get the same current rules.
 
-## Import Resolution
-
-Both apps import Convex types via:
-
-```ts
-import { api } from "@starter/backend/convex/_generated/api";
+```bash
+bunx convex ai-files status
+bunx convex ai-files update
 ```
 
-The `_generated/` directory is created by `convex dev` and is not committed to git. Bundler resolve aliases in `wxt.config.ts` (Vite) and `next.config.ts` (Turbopack/Webpack) ensure imports resolve from the real source directory rather than through `node_modules` hardlinks.
+AI files are development guidance. They are separate from the optional `@convex-dev/agent` runtime component.
 
-## Loading the Extension
+## Adding backend functionality
 
-Load `apps/extension/.output/chrome-mv3/` as unpacked extension in `chrome://extensions` (enable Developer mode).
-
-## Adding Convex Functions
-
-Add `.ts` files in `packages/backend/convex/`. Both apps see them immediately through `@starter/backend`.
+1. Update the schema and functions in `packages/backend/convex/`.
+2. Use validators for arguments and return values.
+3. Prefer indexed queries over in-memory filtering.
+4. Add authorization before exposing user-specific or sensitive data.
+5. Run `bun run codegen` and commit the refreshed `_generated` files.
+6. Run `bun run check` from the repository root.

@@ -1,3 +1,4 @@
+import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { cn } from "@/lib/utils";
 import { CounterClockwiseClockIcon, HomeIcon, ReaderIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
@@ -5,10 +6,12 @@ import { ReactNode } from "react";
 
 export default function ProductLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen w-full">
-      <ProductMenu />
-      {children}
-    </div>
+    <ConvexClientProvider>
+      <div className="flex min-h-screen w-full">
+        <ProductMenu />
+        {children}
+      </div>
+    </ConvexClientProvider>
   );
 }
 

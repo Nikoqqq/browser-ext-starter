@@ -1,10 +1,10 @@
 /**
- * Propagates the Convex deployment URL from the backend package
+ * Propagates the Convex deployment URL from the root Convex environment
  * to both app env files.
  *
  * Usage: bun run scripts/setup-env.ts
  *
- * Reads:  packages/backend/.env.local  (CONVEX_URL or CONVEX_DEPLOYMENT)
+ * Reads:  .env.local                   (CONVEX_URL or CONVEX_DEPLOYMENT)
  * Writes: apps/web/.env.local          (NEXT_PUBLIC_CONVEX_URL=...)
  *         apps/extension/.env          (VITE_CONVEX_URL=...)
  */
@@ -14,7 +14,7 @@ import { resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "..");
 
-const BACKEND_ENV = resolve(ROOT, "packages/backend/.env.local");
+const ROOT_ENV = resolve(ROOT, ".env.local");
 const WEB_ENV = resolve(ROOT, "apps/web/.env.local");
 const EXT_ENV = resolve(ROOT, "apps/extension/.env");
 
@@ -53,20 +53,20 @@ function upsertEnvVar(filePath: string, varName: string, value: string): void {
 
 // --- Main ---
 
-let convexUrl = readEnvVar(BACKEND_ENV, "CONVEX_URL");
+let convexUrl = readEnvVar(ROOT_ENV, "CONVEX_URL");
 
 if (!convexUrl) {
-  const deployment = readEnvVar(BACKEND_ENV, "CONVEX_DEPLOYMENT");
-  if (deployment) {
-    const slug = deployment.replace(/^dev:/, "");
-    convexUrl = `https://${slug}.convex.cloud`;
+  const deployment = readEnvVar(ROOT_ENV, "CONVEX_DEPLOYMENT");
+  const cloudDeployment = deployment?.match(/^(?:dev|prod):([a-z0-9-]+)$/);
+  if (cloudDeployment) {
+    convexUrl = `https://${cloudDeployment[1]}.convex.cloud`;
     console.log(`Derived URL from CONVEX_DEPLOYMENT: ${convexUrl}`);
   }
 }
 
 if (!convexUrl) {
   console.error(
-    "Error: Could not find CONVEX_URL or CONVEX_DEPLOYMENT in packages/backend/.env.local\n\n" +
+    "Error: Could not find CONVEX_URL or CONVEX_DEPLOYMENT in .env.local\n\n" +
       "Run 'bun run dev:backend' first to set up your Convex deployment.\n"
   );
   process.exit(1);

@@ -1,30 +1,25 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@starter/backend/convex/_generated/api";
 
-export function SlidingPanel() {
+export function SlidingPanel({ children }: { children?: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
+  const panelWidth = "min(380px, calc(100vw - 2.5rem))";
 
   const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
 
   useEffect(() => {
+    if (!isOpen) return;
+
     function handleKeyDown(e: KeyboardEvent) {
-      // Ctrl/Cmd + Shift + E to toggle
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "E") {
-        e.preventDefault();
-        e.stopPropagation();
-        toggle();
-      }
-      // Escape to close
-      if (e.key === "Escape" && isOpen) {
-        e.preventDefault();
+      if (e.key === "Escape") {
         setIsOpen(false);
       }
     }
 
-    document.addEventListener("keydown", handleKeyDown, true);
-    return () => document.removeEventListener("keydown", handleKeyDown, true);
-  }, [isOpen, toggle]);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
 
   return (
     <>
@@ -35,7 +30,10 @@ export function SlidingPanel() {
         aria-expanded={isOpen}
         aria-controls="starter-panel"
         className="fixed right-0 top-1/2 z-[2147483647] -translate-y-1/2 rounded-l-lg bg-primary px-1.5 py-3 text-white shadow-lg transition-all hover:bg-primary-hover hover:px-2.5"
-        style={{ right: isOpen ? "380px" : "0px", transition: "right 0.3s ease" }}
+        style={{
+          right: isOpen ? panelWidth : "0px",
+          transition: "right 0.3s ease",
+        }}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -63,8 +61,10 @@ export function SlidingPanel() {
         role="complementary"
         aria-label="Extension panel"
         aria-hidden={!isOpen}
-        className="fixed right-0 top-0 z-[2147483646] h-screen w-[380px] overflow-y-auto border-l border-border bg-surface shadow-2xl"
+        inert={!isOpen}
+        className="fixed right-0 top-0 z-[2147483646] h-screen overflow-y-auto border-l border-border bg-surface shadow-2xl"
         style={{
+          width: panelWidth,
           transform: isOpen ? "translateX(0)" : "translateX(100%)",
           transition: "transform 0.3s ease",
         }}
@@ -97,7 +97,7 @@ export function SlidingPanel() {
 
         {/* Panel content */}
         <div className="p-4 space-y-4">
-          <Counter />
+          {isOpen && (children ?? <Counter />)}
         </div>
       </aside>
     </>
@@ -108,6 +108,26 @@ function Counter() {
   const counter = useQuery(api.counter.get, { name: "default" });
   const increment = useMutation(api.counter.increment);
   const decrement = useMutation(api.counter.decrement);
+  const [isMutating, setIsMutating] = useState(false);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+
+  async function updateCounter(direction: "increment" | "decrement") {
+    setIsMutating(true);
+    setMutationError(null);
+
+    try {
+      const mutate = direction === "increment" ? increment : decrement;
+      await mutate({ name: "default" });
+    } catch (error) {
+      console.error(`Failed to ${direction} the shared counter`, error);
+      setMutationError("Could not update the counter. Please try again.");
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
+  const isLoading = counter === undefined;
+  const controlsDisabled = isLoading || isMutating;
 
   return (
     <div className="rounded-lg border border-border bg-surface-hover p-4 space-y-3">
@@ -117,21 +137,32 @@ function Counter() {
       </p>
       <div className="flex items-center justify-center gap-4 pt-2">
         <button
-          onClick={() => decrement({ name: "default" })}
-          className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+          onClick={() => void updateCounter("decrement")}
+          disabled={controlsDisabled}
+          className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           -
         </button>
-        <span className="min-w-[3ch] text-center text-2xl font-bold text-text tabular-nums">
-          {counter?.value ?? 0}
+        <span
+          aria-busy={isLoading}
+          aria-label={isLoading ? "Loading counter" : undefined}
+          className="min-w-[3ch] text-center text-2xl font-bold text-text tabular-nums"
+        >
+          {isLoading ? "…" : (counter?.value ?? 0)}
         </span>
         <button
-          onClick={() => increment({ name: "default" })}
-          className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+          onClick={() => void updateCounter("increment")}
+          disabled={controlsDisabled}
+          className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           +
         </button>
       </div>
+      {mutationError && (
+        <p role="alert" className="text-xs text-red-600">
+          {mutationError}
+        </p>
+      )}
     </div>
   );
 }

@@ -3,13 +3,15 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "convex dev",
-    "deploy": "convex deploy"
+    "dev": "cd ../.. && convex dev",
+    "deploy": "cd ../.. && convex deploy",
+    "codegen": "cd ../.. && convex codegen",
+    "typecheck": "tsc --noEmit -p convex/tsconfig.json"
   },
   "dependencies": {
-    "convex": "^1.31.6"
+    "convex": "^1.45.0"
   },
   "devDependencies": {
-    "typescript": "^5"
+    "typescript": "^7.0.2"
   }
 }

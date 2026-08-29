@@ -4,7 +4,6 @@ import { SlidingPanel } from "../components/SlidingPanel";
 import "~/assets/global.css";
 
 const CONVEX_URL = import.meta.env.VITE_CONVEX_URL;
-const convex = CONVEX_URL ? new ConvexReactClient(CONVEX_URL) : null;
 
 function MissingConfig() {
   return (
@@ -31,6 +30,8 @@ export default defineContentScript({
   cssInjectionMode: "ui",
 
   async main(ctx) {
+    const convex = CONVEX_URL ? new ConvexReactClient(CONVEX_URL) : null;
+
     const ui = await createShadowRootUi(ctx, {
       name: "starter-panel",
       position: "overlay",
@@ -44,12 +45,17 @@ export default defineContentScript({
             </ConvexProvider>
           );
         } else {
-          root.render(<MissingConfig />);
+          root.render(
+            <SlidingPanel>
+              <MissingConfig />
+            </SlidingPanel>
+          );
         }
         return root;
       },
-      onRemove(root) {
+      async onRemove(root) {
         root?.unmount();
+        await convex?.close();
       },
     });
 

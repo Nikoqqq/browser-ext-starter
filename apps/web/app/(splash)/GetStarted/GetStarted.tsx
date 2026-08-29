@@ -15,12 +15,14 @@ export const GetStarted = () => {
   return (
     <div className="flex grow flex-col">
       <div className="container mb-20 flex grow flex-col justify-center">
-        <h1 className="mb-8 mt-16 flex flex-col items-center gap-8 text-center text-6xl font-extrabold leading-none tracking-tight">
-          Your app powered by
+        <h1 className="mb-8 mt-16 flex flex-col items-center gap-8 text-center text-4xl font-extrabold leading-none tracking-tight sm:text-6xl">
+          Browser Extension Starter
+          <span className="text-3xl">powered by</span>
           <ConvexLogo width={377} height={44} />
         </h1>
         <div className="mb-8 text-center text-lg text-muted-foreground">
-          Build a realtime full-stack app in no time.
+          Build a browser extension with a realtime Convex backend and a
+          Next.js companion app.
         </div>
         <div className="mb-16 flex justify-center gap-4">
           <Button asChild size="lg">
@@ -30,15 +32,16 @@ export const GetStarted = () => {
             <Link href="https://docs.convex.dev/home">Convex docs</Link>
           </Button>
         </div>
-        <div className="flex flex-col gap-4 bg-muted/50 p-12 dark:bg-transparent">
+        <div className="flex min-w-0 flex-col gap-4 bg-muted/50 p-4 dark:bg-transparent sm:p-8 md:p-12">
           <h2 className="mb-1 text-center text-3xl font-bold md:text-4xl ">
             Next steps
           </h2>
           <div className="mb-1 text-center text-muted-foreground">
-            This template is a starting point for building your web application.
+            This monorepo is a starting point for an extension, backend, and
+            companion web app.
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
+          <div className="grid min-w-0 gap-4 md:grid-cols-2">
+            <Card className="min-w-0">
               <CardHeader>
                 <CardTitle className="flex gap-2">
                   <PlayIcon /> Play with the app
@@ -50,12 +53,12 @@ export const GetStarted = () => {
                   href="/product"
                   className="font-medium underline underline-offset-4 hover:no-underline"
                 >
-                  Get Started
+                  product demo
                 </Link>{" "}
-                to see the app in action.
+                to try the shared realtime counter.
               </CardContent>
             </Card>
-            <Card>
+            <Card className="min-w-0">
               <CardHeader>
                 <CardTitle className="flex gap-2">
                   <StackIcon /> Inspect your database
@@ -70,10 +73,11 @@ export const GetStarted = () => {
                 >
                   Convex dashboard
                 </Link>{" "}
-                is already open in another window.
+                is available after connecting the starter to your Convex
+                deployment.
               </CardContent>
             </Card>
-            <Card>
+            <Card className="min-w-0">
               <CardHeader>
                 <CardTitle className="flex gap-2">
                   <CodeIcon />
@@ -81,11 +85,11 @@ export const GetStarted = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                Edit <Code>convex/counter.ts</Code> to change the backend
-                functionality.
+                Edit <Code>packages/backend/convex/counter.ts</Code> to change
+                the backend functionality.
               </CardContent>
             </Card>
-            <Card>
+            <Card className="min-w-0">
               <CardHeader>
                 <CardTitle className="flex gap-2">
                   <MagicWandIcon />
@@ -93,13 +97,14 @@ export const GetStarted = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                Edit <Code>app/page.tsx</Code> to change your frontend.
+                Edit <Code>apps/web/app/product/page.tsx</Code> to change the
+                product demo.
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
-      <div className="px-20 pb-20">
+      <div className="px-4 pb-20 sm:px-8 md:px-20">
         <div className="container">
           <h2 className="mb-6 text-center text-2xl font-bold">
             Helpful resources

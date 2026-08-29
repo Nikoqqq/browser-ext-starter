@@ -1,79 +1,112 @@
 # Browser Extension Starter
 
-A starter template for building Chrome extensions with companion websites, powered by real-time sync.
+A production-minded starter for a browser extension and companion web app with shared, real-time state.
 
-**Stack:** Bun workspaces · WXT (Shadow DOM) · React · Tailwind CSS · Convex · Next.js · shadcn/ui
+**Stack:** Bun workspaces · WXT 0.21 · React 19 · Tailwind CSS 4 · Convex · Next.js 16 · shadcn/ui
 
-## Quick Start
+## Prerequisites
 
-### Prerequisites
+- [Bun](https://bun.sh/) 1.4.0 or newer
+- [Node.js](https://nodejs.org/) 22.12.0 or newer
+- A Convex account for a cloud deployment, or Convex anonymous local mode for account-free development
 
-- [Bun](https://bun.sh/) (v1.1+)
-- [Node.js](https://nodejs.org/) (v18+)
-- A free [Convex](https://convex.dev/) account
+The exact Bun release is recorded in `packageManager`; CI uses that version with the committed lockfile.
 
-### Setup
+## Quick start
 
 ```bash
-# 1. Install dependencies
-bun install
+# Install every workspace from the repository root.
+bun install --frozen-lockfile
 
-# 2. Set up Convex (interactive — login + create deployment)
-#    This must be run manually from the backend directory on first setup.
-cd packages/backend && bun dev
-#    Follow the prompts to log in and create a project.
-#    Wait for "Convex functions ready!", then press Ctrl+C.
-cd ../..
+# Configure and start Convex. Stop it after "Convex functions ready!".
+bun run dev:backend
 
-# 3. Propagate the Convex URL to both apps
+# Copy the generated Convex URL into both app-specific env files.
 bun run setup:env
 
-# 4. Start everything (backend + web + extension)
+# Start Convex, Next.js, and WXT together.
 bun run dev
 ```
 
-### Load the Extension
+For a disposable, account-free local backend, run the setup step as:
 
-1. Open `chrome://extensions`
-2. Enable **Developer mode**
-3. Click **Load unpacked** → select `apps/extension/.output/chrome-mv3/`
-
-## Project Structure
-
+```bash
+CONVEX_AGENT_MODE=anonymous bun run dev:backend
 ```
+
+Convex owns the root `.env.local`; `setup:env` writes only the two public client URLs:
+
+- `apps/web/.env.local` → `NEXT_PUBLIC_CONVEX_URL`
+- `apps/extension/.env` → `VITE_CONVEX_URL`
+
+## Load the extension
+
+1. Run `bun run build:ext`.
+2. Open `chrome://extensions` and enable **Developer mode**.
+3. Choose **Load unpacked** and select `apps/extension/.output/chrome-mv3/`.
+
+The content script currently matches all URLs because the starter demonstrates a site-overlay extension. Narrow `matches` before shipping a product that only needs specific sites.
+
+## Project structure
+
+```text
 apps/
-  extension/    @starter/extension   — WXT browser extension (Chrome)
-  web/          @starter/web         — Next.js + shadcn website (port 3100)
+  extension/    @starter/extension   WXT extension (Chrome and Firefox)
+  web/          @starter/web         Next.js companion app (port 3100)
 packages/
-  backend/      @starter/backend     — Convex backend (schema + functions)
-  shared/       @starter/shared      — Shared utilities
+  backend/      @starter/backend     Convex schema, functions, and generated API
+  shared/       @starter/shared      Optional home for future cross-app utilities
 ```
 
-## How It Works
+Both apps import the generated Convex API directly from `@starter/backend`. The demo shared counter proves end-to-end subscriptions: open `/product` in the web app and the extension panel, then change either counter.
 
-Both apps connect to the same Convex backend. The demo feature is a **shared counter**:
+The counter functions are intentionally public and unauthenticated demo endpoints. Add authorization and ownership checks before storing real user data.
 
-- The extension injects a sliding panel (Shadow DOM) on any page with +/- buttons
-- The web app at `localhost:3100/product` shows the same counter
-- Changes sync in real-time via Convex subscriptions
+## Quality gates
 
-This proves the end-to-end architecture works. Replace the counter with your own features.
+| Command | Purpose |
+| --- | --- |
+| `bun run lint` | Lint the Next.js app with the flat ESLint config |
+| `bun run typecheck` | Type-check root scripts plus backend, web, and extension workspaces |
+| `bun run build` | Build the web app and Chrome extension |
+| `bun run build:ext:firefox` | Build the Firefox extension |
+| `bun run check` | Run lint, all type-checks, both browser builds, and high-severity audit |
+| `bun run check:release-env` | Reject a missing, local, or malformed production Convex URL |
+| `bun run check:release` | Validate the release URL, run `check`, and produce Chrome/Firefox ZIP artifacts |
+| `bun run audit` | Fail on high or critical advisories |
+| `bun run audit:all` | Report advisories at every severity |
+| `bun run codegen` | Refresh committed Convex generated files |
 
-## Architecture Notes
+Generated Convex API files are committed so a clean checkout can type-check and build without an active deployment. Run `bun run codegen` after changing the schema or functions.
 
-- **Shadow DOM isolation** — The extension's UI is fully isolated from host page styles using WXT's `createShadowRootUi` + Tailwind v4
-- **Convex real-time** — Both apps use `useQuery` subscriptions, so changes propagate instantly
-- **Bun workspaces** — Shared types via `@starter/backend` package; both apps import `api` from the same source
-- **Keyboard shortcut** — `Ctrl/Cmd + Shift + E` toggles the extension panel, `Escape` closes it
+## Convex AI guidance
 
-## Scripts
+The repository uses Convex AI files for current backend rules and editor/agent skills:
 
-| Command | Description |
-|---------|-------------|
-| `bun run dev` | Start all services in parallel |
-| `bun run dev:backend` | Convex dev server only |
-| `bun run dev:web` | Next.js dev server only (port 3100) |
-| `bun run dev:ext` | WXT dev server only (port 3200) |
-| `bun run build:web` | Production build for web |
-| `bun run build:ext` | Production build for extension |
-| `bun run setup:env` | Propagate Convex URL to app env files |
+```bash
+bunx convex ai-files status
+bunx convex ai-files update
+```
+
+This installs guidance for Codex and Claude Code. It does **not** install the optional `@convex-dev/agent` runtime component; add that only when the product actually needs persistent AI-agent threads, tools, or workflows.
+
+## Before publishing a derived extension
+
+- Set the production Convex URL explicitly, then build the store artifacts:
+
+  ```bash
+  VITE_CONVEX_URL=https://<production-deployment>.convex.cloud bun run check:release
+  ```
+
+  Alternatively, put the same value in the gitignored `apps/extension/.env.production.local`. The release preflight deliberately ignores the development-only `apps/extension/.env`, so a localhost or dev deployment cannot silently enter a store ZIP.
+- Narrow the content-script matches to the sites the product actually supports.
+- Add product-specific icons, name, description, privacy disclosures, and store metadata.
+- Configure a stable Firefox extension ID and the required data-collection declaration.
+- Replace the public demo counter with authenticated, ownership-checked functions.
+- Inspect both generated manifests and archives. The Firefox sources ZIP contains the root lockfile, extension sources, and imported Convex backend files needed to reproduce the extension bundle; it excludes environment and agent files.
+
+## Dependency policy
+
+Dependencies are kept at the newest versions compatible with the current toolchain. The web workspace deliberately stays on ESLint 9 and TypeScript 5.9 until the Next.js ESLint stack supports their next majors. Node types target the documented Node 22 runtime floor instead of an unrelated newer Node major.
+
+See [`docs/monorepo.md`](docs/monorepo.md) for workspace and environment details.

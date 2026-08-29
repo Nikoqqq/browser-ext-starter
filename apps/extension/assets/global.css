@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@source "../components";
+@source "../entrypoints";
 
 @theme inline {
   /* Override rem with px for Shadow DOM compatibility */

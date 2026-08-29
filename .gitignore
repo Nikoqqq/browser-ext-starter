@@ -11,6 +11,9 @@ node_modules/
 # Build output
 dist/
 
+# Convex local and anonymous deployments
+.convex/
+
 # Environment
 .env
 .env.local
